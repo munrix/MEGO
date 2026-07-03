@@ -192,6 +192,8 @@ export default async function EventDetail({
                 tier: t.tier,
                 status: t.status,
                 holderName: t.holderName,
+                holderPhone: t.holderPhone,
+                received: t.received,
                 checkedInAt: t.checkedInAt?.toISOString() ?? null,
                 checkedInByName: t.checkedInBy
                   ? staffName.get(t.checkedInBy) ?? null

@@ -220,3 +220,17 @@ export async function deleteEvent(eventId: string) {
   revalidatePath("/events");
   redirect("/dashboard");
 }
+
+export async function toggleReceived(ticketId: string, received: boolean) {
+  const user = await requireUser();
+  const ticket = await db.ticket.update({
+    where: { id: ticketId },
+    data: { received },
+  });
+  await audit(
+    user.id,
+    received ? "TICKET_MARKED_RECEIVED" : "TICKET_MARKED_UNRECEIVED",
+    `${ticket.shortCode} (${ticket.holderName ?? "Bearer"})`
+  );
+  revalidatePath(`/events/${ticket.eventId}`);
+}

@@ -8,6 +8,7 @@ import {
   restoreTicket,
   assignHolder,
   deleteTicket,
+  toggleReceived,
 } from "@/app/(app)/events/actions";
 
 type Ticket = {
@@ -16,6 +17,8 @@ type Ticket = {
   tier: string;
   status: string;
   holderName: string | null;
+  holderPhone: string | null;
+  received: boolean;
   checkedInAt: string | null;
   checkedInByName?: string | null;
 };
@@ -33,6 +36,14 @@ export function TicketRow({ ticket, isAdmin }: { ticket: Ticket; isAdmin: boolea
 
   return (
     <div className="p-3 flex items-center gap-3">
+      <input
+        type="checkbox"
+        checked={ticket.received}
+        disabled={pending}
+        onChange={(e) => start(() => toggleReceived(ticket.id, e.target.checked))}
+        className="w-4 h-4 rounded border-line bg-panel accent-[#c9a35c] cursor-pointer shrink-0"
+        title="Mark ticket as received/sent"
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 flex-wrap">
           {editing ? (
@@ -64,6 +75,7 @@ export function TicketRow({ ticket, isAdmin }: { ticket: Ticket; isAdmin: boolea
         </div>
         <p className="text-muted text-xs font-mono mt-0.5">
           {ticket.shortCode}
+          {ticket.holderPhone && ` · 📞 ${ticket.holderPhone}`}
           {ticket.checkedInAt &&
             ` · in at ${new Date(ticket.checkedInAt).toLocaleTimeString()}`}
           {ticket.checkedInByName && (

@@ -30,7 +30,14 @@ export async function login(
   if (rateLimited(username))
     return { error: "Too many attempts. Wait a few minutes." };
 
-  const user = await db.user.findUnique({ where: { username } });
+  let user;
+  try {
+    user = await db.user.findUnique({ where: { username } });
+  } catch (error) {
+    console.error("Database login query failed:", error);
+    return { error: "Database connection error. Please verify database path and migrations." };
+  }
+
   if (!user || !user.active || !(await bcrypt.compare(password, user.password))) {
     return { error: "The Creed does not recognize you." };
   }

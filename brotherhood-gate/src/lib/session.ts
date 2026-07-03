@@ -1,7 +1,10 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
 
-const secret = new TextEncoder().encode(process.env.SESSION_SECRET!);
+const getSecret = () => {
+  const secretStr = process.env.SESSION_SECRET || "default-unsafe-session-secret-change-me-in-production";
+  return new TextEncoder().encode(secretStr);
+};
 
 export type SessionUser = {
   id: string;
@@ -17,7 +20,7 @@ export async function createSession(user: SessionUser) {
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("12h")
-    .sign(secret);
+    .sign(getSecret());
 
   const jar = await cookies();
   jar.set(COOKIE, token, {
@@ -34,7 +37,7 @@ export async function getSession(): Promise<SessionUser | null> {
   const token = jar.get(COOKIE)?.value;
   if (!token) return null;
   try {
-    const { payload } = await jwtVerify(token, secret);
+    const { payload } = await jwtVerify(token, getSecret());
     return payload.user as SessionUser;
   } catch {
     return null;

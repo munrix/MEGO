@@ -34,13 +34,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "over" }, { status: 403 });
   }
 
-  // already registered on this phone? just continue
-  const existing = await getHuntPlayerId();
-  if (existing) {
-    const p = await db.huntPlayer.findUnique({ where: { id: existing } });
-    if (p) return NextResponse.json({ ok: true, resumed: true });
-  }
-
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
   if (limited(ip)) {
     return NextResponse.json({ error: "rate_limited" }, { status: 429 });
@@ -49,16 +42,78 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const fullName = String(body.fullName ?? "").trim().slice(0, 80);
   const phone = String(body.phone ?? "").trim().slice(0, 30) || null;
+  const userAgent = req.headers.get("user-agent") ?? "unknown";
+
+  // Check for already registered on this phone / session
+  const existing = await getHuntPlayerId();
+  let existingPlayer = null;
+
+  if (existing) {
+    existingPlayer = await db.huntPlayer.findUnique({ where: { id: existing } });
+  }
+  if (!existingPlayer && phone) {
+    existingPlayer = await db.huntPlayer.findFirst({ where: { phone } });
+  }
+  if (!existingPlayer && ip !== "unknown") {
+    existingPlayer = await db.huntPlayer.findFirst({ where: { ip, userAgent } });
+  }
+
+  if (existingPlayer) {
+    await createHuntSession(existingPlayer.id);
+
+    const jarPending = req.cookies.get(PENDING_COOKIE)?.value;
+    let credited = false;
+    let stationNameEn = "";
+    let stationNameAr = "";
+    if (jarPending) {
+      const [slug, token] = jarPending.split("|");
+      if (slug && token) {
+        const outcome = await processScan(existingPlayer.id, slug, token, {
+          userAgent,
+          ip,
+        });
+        credited = outcome.kind === "ok" || outcome.kind === "completed";
+        if (credited && "stationName" in outcome) {
+          stationNameEn = outcome.stationName.en;
+          stationNameAr = outcome.stationName.ar;
+        }
+      }
+    }
+
+    const res = NextResponse.json({ ok: true, resumed: true, credited, stationNameEn, stationNameAr });
+    res.cookies.delete(PENDING_COOKIE);
+    return res;
+  }
+
   if (fullName.length < 3) {
     return NextResponse.json({ error: "name_required" }, { status: 400 });
   }
 
+  // Determine starter station (first scan, or Havana as fallback)
+  const jarPending = req.cookies.get(PENDING_COOKIE)?.value;
+  let firstStationSlug = "havana";
+  if (jarPending) {
+    const [slug] = jarPending.split("|");
+    if (slug) firstStationSlug = slug;
+  }
+
   const stations = await db.huntStation.findMany({ where: { active: true } });
+  const firstStation = stations.find((s) => s.slug === firstStationSlug) || stations[0];
   const saltKey = stations.find((s) => s.slug === "salt-key");
-  const route = generateRoute(
-    stations.map((s) => s.id),
-    saltKey?.id ?? null
+
+  // Filter out the first station and final salt-key station
+  const otherStations = stations.filter((s) => s.id !== firstStation.id && (!saltKey || s.id !== saltKey.id));
+  
+  // Shuffle intermediate stations
+  const shuffledOthers = generateRoute(
+    otherStations.map((s) => s.id),
+    null
   );
+
+  const route = [firstStation.id, ...shuffledOthers];
+  if (saltKey && firstStation.id !== saltKey.id) {
+    route.push(saltKey.id);
+  }
 
   const player = await db.huntPlayer.create({
     data: {
@@ -66,25 +121,32 @@ export async function POST(req: NextRequest) {
       phone,
       sessionToken: crypto.randomBytes(24).toString("base64url"),
       route: JSON.stringify(route),
+      ip,
+      userAgent,
     },
   });
   await createHuntSession(player.id);
 
-  // credit a station scan that arrived before registration
-  const jarPending = req.cookies.get(PENDING_COOKIE)?.value;
+  // Credit the pending first scan
   let credited = false;
+  let stationNameEn = "";
+  let stationNameAr = "";
   if (jarPending) {
     const [slug, token] = jarPending.split("|");
     if (slug && token) {
       const outcome = await processScan(player.id, slug, token, {
-        userAgent: req.headers.get("user-agent") ?? undefined,
+        userAgent,
         ip,
       });
       credited = outcome.kind === "ok" || outcome.kind === "completed";
+      if (credited && "stationName" in outcome) {
+        stationNameEn = outcome.stationName.en;
+        stationNameAr = outcome.stationName.ar;
+      }
     }
   }
 
-  const res = NextResponse.json({ ok: true, credited });
+  const res = NextResponse.json({ ok: true, credited, stationNameEn, stationNameAr });
   res.cookies.delete(PENDING_COOKIE);
   return res;
 }

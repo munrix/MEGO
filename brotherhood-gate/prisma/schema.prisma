@@ -128,11 +128,14 @@ model HuntPlayer {
   flagReason   String?
   keyGivenAt   DateTime?
   keyGivenBy   String?
+  ip           String?
+  userAgent    String?
 
   scans HuntScan[]
 
   @@index([fullName])
   @@index([completedAt])
+  @@index([ip, userAgent])
 }
 
 model HuntScan {

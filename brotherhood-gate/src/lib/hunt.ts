@@ -97,6 +97,7 @@ export type ScanOutcome =
   | { kind: "ok"; stationName: { en: string; ar: string }; found: number; required: number; early: boolean }
   | { kind: "completed"; placement: number; isWinner: boolean; found: number; required: number }
   | { kind: "already"; stationName: { en: string; ar: string }; found: number; required: number }
+  | { kind: "wrong_order"; stationName: { en: string; ar: string } }
   | { kind: "not_open" }
   | { kind: "over" }
   | { kind: "invalid" };
@@ -153,7 +154,7 @@ export async function processScan(
   const nextTarget = route.find((id) => !alreadyIds.has(id));
   const early = station.id !== nextTarget;
   if (!cfg.lenientMode && early) {
-    return { kind: "already", stationName: names, found: alreadyIds.size, required: cfg.requiredCount };
+    return { kind: "wrong_order", stationName: names };
   }
 
   await db.huntScan.create({

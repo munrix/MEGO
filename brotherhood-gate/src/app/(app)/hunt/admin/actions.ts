@@ -2,6 +2,7 @@
 
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireAdmin, requireUser } from "@/lib/session";
 import { audit } from "@/lib/audit";
@@ -130,4 +131,14 @@ export async function stopHunt() {
   });
   await audit(user.id, "HUNT_STOP");
   revalidatePath(PATH);
+}
+
+export async function deletePlayer(playerId: string) {
+  const user = await requireAdmin();
+  const p = await db.huntPlayer.delete({
+    where: { id: playerId },
+  });
+  await audit(user.id, "HUNT_PLAYER_DELETE", p.fullName);
+  revalidatePath(PATH);
+  redirect(PATH);
 }

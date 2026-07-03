@@ -44,7 +44,11 @@ function RegisterInner() {
       });
       const data = await res.json();
       if (data.ok) {
-        router.replace("/hunt/play");
+        if (data.credited) {
+          router.replace(`/hunt/play?scan=ok&sn=${encodeURIComponent(data.stationNameEn)}&sa=${encodeURIComponent(data.stationNameAr)}&f=1`);
+        } else {
+          router.replace("/hunt/play");
+        }
         return;
       }
       setError(

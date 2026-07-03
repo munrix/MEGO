@@ -228,6 +228,8 @@ function ScanOverlay({
         : t.finisher[lang]
       : c.kind === "already"
       ? t.alreadyFound[lang]
+      : c.kind === "wrong_order"
+      ? t.wrongOrder[lang]
       : c.kind === "not_open"
       ? t.notOpen[lang]
       : c.kind === "over"
@@ -239,11 +241,11 @@ function ScanOverlay({
       dir={dirOf(lang)}
       onClick={onDismiss}
       className={`fixed inset-0 z-50 verdict-enter flex flex-col items-center justify-center gap-4 px-8 text-center ${
-        good ? "bg-[#0d2b1c]" : c.kind === "already" ? "bg-[#3d3413]" : "bg-[#3a1016]"
+        good ? "bg-[#0d2b1c]" : (c.kind === "already" || c.kind === "wrong_order") ? "bg-[#3d3413]" : "bg-[#3a1016]"
       }`}
     >
       <span className="text-7xl">
-        {c.kind === "completed" ? "☠️" : good ? "🏴‍☠️" : c.kind === "already" ? "⚠️" : "✕"}
+        {c.kind === "completed" ? "☠️" : good ? "🏴‍☠️" : (c.kind === "already" || c.kind === "wrong_order") ? "⚠️" : "✕"}
       </span>
       <h2 className="text-3xl text-goldbright display">
         {c.kind === "completed"

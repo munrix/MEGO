@@ -73,6 +73,10 @@ export const t = {
   },
   nameRequired: { ar: "أدخل اسمك الكامل", en: "Enter your full name" },
   networkError: { ar: "خطأ في الاتصال — حاول مرة أخرى", en: "Network error — try again" },
+  wrongOrder: {
+    ar: "ترتيب خاطئ! يجب أن تجد العلامات بالترتيب.",
+    en: "Wrong order! You must find the marks in the correct sequence.",
+  },
 } as const;
 
 export function dirOf(lang: Lang): "rtl" | "ltr" {

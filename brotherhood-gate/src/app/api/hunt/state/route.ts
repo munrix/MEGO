@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getHuntConfig, getHuntPlayerId, huntPhase } from "@/lib/hunt";
+import { getHuntConfig, getHuntPlayerId, huntPhase, createHuntSession } from "@/lib/hunt";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const cfg = await getHuntConfig();
   const phase = huntPhase(cfg);
 
@@ -22,7 +22,23 @@ export async function GET() {
     required: cfg.requiredCount,
   };
 
-  const playerId = await getHuntPlayerId();
+  let playerId = await getHuntPlayerId();
+
+  if (!playerId) {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const userAgent = req.headers.get("user-agent") ?? "unknown";
+
+    if (ip !== "unknown") {
+      const restoredPlayer = await db.huntPlayer.findFirst({
+        where: { ip, userAgent },
+      });
+      if (restoredPlayer) {
+        playerId = restoredPlayer.id;
+        await createHuntSession(restoredPlayer.id);
+      }
+    }
+  }
+
   if (!playerId) return NextResponse.json({ ...base, registered: false });
 
   const player = await db.huntPlayer.findUnique({

@@ -12,6 +12,7 @@ import {
   disqualify,
   startHunt,
   stopHunt,
+  deletePlayer,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -289,6 +290,13 @@ export default async function HuntAdmin({
                 {isAdmin && selected.flagReason !== "DISQUALIFIED" && (
                   <form action={disqualify.bind(null, selected.id)}>
                     <button className="btn btn-danger text-xs">Disqualify</button>
+                  </form>
+                )}
+                {isAdmin && (
+                  <form action={deletePlayer.bind(null, selected.id)}>
+                    <button className="btn btn-danger text-xs bg-red-700 hover:bg-red-800 border-none font-semibold">
+                      Remove
+                    </button>
                   </form>
                 )}
                 <Link href={`/hunt/admin${q ? `?q=${encodeURIComponent(q)}` : ""}`} className="btn btn-outline text-xs">

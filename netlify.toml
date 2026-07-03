@@ -1,0 +1,4 @@
+[build]
+  base = "brotherhood-gate"
+  command = "npm run build"
+  publish = ".next"

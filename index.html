@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>R6 Scoreboard OCR Tool</title>
+    <script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+    </script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .upload-section, .data-section {
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            color: #555;
+            white-space: pre-wrap;
+        }
+        #canvas {
+            display: none;
+        }
+        .roi-controls {
+            margin-top: 10px;
+        }
+        .roi-controls label {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>R6 Scoreboard OCR Tool (V3 - Enhanced)</h1>
+
+        <div class="upload-section">
+            <h2>1. Upload Your Scoreboard Screenshot</h2>
+            <input type="file" id="screenshotInput" accept="image/*">
+            <div class="roi-controls">
+                <label>ROI X: <input type="number" id="roiX" value="200" min="0"></label>
+                <label>ROI Y: <input type="number" id="roiY" value="100" min="0"></label>
+                <label>ROI Width: <input type="number" id="roiWidth" value="500" min="0"></label>
+                <label>ROI Height: <input type="number" id="roiHeight" value="400" min="0"></label>
+            </div>
+        </div>
+
+        <div class="data-section">
+            <h2>2. Extracted Data</h2>
+            <p id="status">Please upload a screenshot to process...</p>
+            <table id="scoreboardTable">
+                <thead>
+                    <tr>
+                        <th>Player Name</th>
+                        <th>Score</th>
+                        <th>Kills</th>
+                        <th>Deaths</th>
+                        <th>Assists</th>
+                    </tr>
+                </thead>
+                <tbody id="scoreboardBody">
+                </tbody>
+            </table>
+            <button onclick="downloadCSV()" disabled id="downloadBtn">Download as CSV</button>
+        </div>
+    </div>
+    <canvas id="canvas"></canvas>
+    <canvas id="processedCanvas" style="display: none;"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.0/dist/tesseract.min.js"></script>
+    <script>
+        const screenshotInput = document.getElementById('screenshotInput');
+        const status = document.getElementById('status');
+        const scoreboardBody = document.getElementById('scoreboardBody');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const processedCanvas = document.getElementById('processedCanvas');
+        const pctx = processedCanvas.getContext('2d');
+        const roiXInput = document.getElementById('roiX');
+        const roiYInput = document.getElementById('roiY');
+        const roiWidthInput = document.getElementById('roiWidth');
+        const roiHeightInput = document.getElementById('roiHeight');
+
+        screenshotInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                status.textContent = 'Processing image with OCR...';
+                const img = new Image();
+                img.onload = function() {
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    ctx.drawImage(img, 0, 0);
+                    preprocessImage(img);
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+
+        function preprocessImage(img) {
+            processedCanvas.width = img.width;
+            processedCanvas.height = img.height;
+            pctx.drawImage(img, 0, 0);
+
+            // Enhanced preprocessing
+            const imageData = pctx.getImageData(0, 0, processedCanvas.width, processedCanvas.height);
+            const data = imageData.data;
+            for (let i = 0; i < data.length; i += 4) {
+                const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                data[i] = brightness;     // Red
+                data[i + 1] = brightness; // Green
+                data[i + 2] = brightness; // Blue
+                // Aggressive contrast and brightness adjustment
+                const contrastFactor = 1.5;
+                const adjustedBrightness = Math.min(255, brightness * contrastFactor + 30);
+                data[i] = adjustedBrightness;
+                data[i + 1] = adjustedBrightness;
+                data[i + 2] = adjustedBrightness;
+            }
+            pctx.putImageData(imageData, 0, 0);
+
+            // Use dynamic ROI from inputs
+            const roi = {
+                x: parseInt(roiXInput.value) || 200,
+                y: parseInt(roiYInput.value) || 100,
+                width: parseInt(roiWidthInput.value) || 500,
+                height: parseInt(roiHeightInput.value) || 400
+            };
+            const roiCanvas = document.createElement('canvas');
+            roiCanvas.width = roi.width;
+            roiCanvas.height = roi.height;
+            const roictx = roiCanvas.getContext('2d');
+            roictx.drawImage(processedCanvas, roi.x, roi.y, roi.width, roi.height, 0, 0, roi.width, roi.height);
+            processWithOCR(roiCanvas);
+        }
+
+        async function processWithOCR(canvas) {
+            const result = await Tesseract.recognize(canvas, 'eng', {
+                logger: m => status.textContent = `Progress: ${m.progress * 100}%\n`
+            });
+
+            const text = result.data.text;
+            status.textContent += `Raw OCR Text:\n${text}\n`;
+            const lines = text.split('\n').filter(line => line.trim());
+            const data = parseScoreboard(lines);
+            updateTable(data);
+        }
+
+        function parseScoreboard(lines) {
+            const players = [];
+            for (let line of lines) {
+                const parts = line.trim().split(/\s+/).filter(p => p);
+                if (parts.length >= 4) {
+                    const numericParts = parts.slice(-4).map(p => parseInt(p));
+                    if (numericParts.every(num => !isNaN(num))) {
+                        const name = parts.slice(0, -4).join(' ').trim() || 'Unknown';
+                        players.push({
+                            name: name,
+                            score: numericParts[0],
+                            kills: numericParts[1],
+                            deaths: numericParts[2],
+                            assists: numericParts[3]
+                        });
+                    }
+                }
+            }
+            return players;
+        }
+
+        function updateTable(data) {
+            scoreboardBody.innerHTML = '';
+            if (data && data.length > 0) {
+                data.forEach(player => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${player.name || 'N/A'}</td>
+                        <td>${player.score || '0'}</td>
+                        <td>${player.kills || '0'}</td>
+                        <td>${player.deaths || '0'}</td>
+                        <td>${player.assists || '0'}</td>
+                    `;
+                    scoreboardBody.appendChild(row);
+                });
+                status.textContent += 'Data extracted successfully!';
+                downloadBtn.disabled = false;
+            } else {
+                status.textContent += 'No valid scoreboard data extracted. Please adjust the ROI settings or screenshot.';
+            }
+        }
+
+        function downloadCSV() {
+            let csv = 'Player Name,Score,Kills,Deaths,Assists\n';
+            const rows = scoreboardBody.getElementsByTagName('tr');
+            for (let row of rows) {
+                const cols = row.getElementsByTagName('td');
+                csv += `${cols[0].textContent},${cols[1].textContent},${cols[2].textContent},${cols[3].textContent},${cols[4].textContent}\n`;
+            }
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'scoreboard_data.csv';
+            a.click();
+        }
+    </script>
+</body>
+</html>

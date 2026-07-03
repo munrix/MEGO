@@ -4,7 +4,7 @@
     {
       "name": "brotherhood-gate",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "brotherhood-gate", "run", "dev"],
+      "runtimeArgs": ["run", "dev"],
       "port": 3000
     }
   ]

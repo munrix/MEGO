@@ -99,3 +99,35 @@ export async function disqualify(playerId: string) {
   await audit(user.id, "HUNT_DISQUALIFY", p.fullName);
   revalidatePath(PATH);
 }
+
+export async function startHunt() {
+  const user = await requireAdmin();
+  const now = new Date();
+  const registrationAt = new Date(now.getTime() - 5 * 60_000);
+  const opensAt = now;
+  const closesAt = new Date(now.getTime() + 60 * 60_000); // 1 hour default duration
+
+  await db.huntConfig.update({
+    where: { id: 1 },
+    data: {
+      registrationAt,
+      opensAt,
+      closesAt,
+      killSwitch: false,
+    },
+  });
+  await audit(user.id, "HUNT_START");
+  revalidatePath(PATH);
+}
+
+export async function stopHunt() {
+  const user = await requireAdmin();
+  await db.huntConfig.update({
+    where: { id: 1 },
+    data: {
+      killSwitch: true,
+    },
+  });
+  await audit(user.id, "HUNT_STOP");
+  revalidatePath(PATH);
+}

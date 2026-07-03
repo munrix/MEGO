@@ -10,6 +10,8 @@ import {
   giveKey,
   clearFlag,
   disqualify,
+  startHunt,
+  stopHunt,
 } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -89,7 +91,24 @@ export default async function HuntAdmin({
             {cfg.killSwitch && <span className="badge badge-red ml-2">KILL SWITCH ON</span>}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          {isAdmin && (
+            <>
+              {phase === "open" ? (
+                <form action={stopHunt}>
+                  <button className="btn btn-danger text-xs font-bold px-3 py-1.5 rounded">
+                    🛑 Stop Hunt
+                  </button>
+                </form>
+              ) : (
+                <form action={startHunt}>
+                  <button className="btn btn-green text-xs font-bold px-3 py-1.5 rounded">
+                    ▶ Start Hunt
+                  </button>
+                </form>
+              )}
+            </>
+          )}
           <Link href="/hunt/screen" className="btn btn-outline text-xs" target="_blank">
             📺 Big screen
           </Link>

@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  name      String
+  role      String   @default("STAFF") // ADMIN | STAFF
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  scans     ScanLog[]
+  auditLogs AuditLog[]
+  events    EventStaff[]
+}
+
+model Event {
+  id             String   @id @default(cuid())
+  name           String
+  venue          String
+  startsAt       DateTime
+  capacityNormal Int      @default(0)
+  capacityVip    Int      @default(0)
+  status         String   @default("OPEN") // OPEN | CLOSED | ARCHIVED
+  createdAt      DateTime @default(now())
+
+  tickets Ticket[]
+  staff   EventStaff[]
+}
+
+model EventStaff {
+  eventId String
+  userId  String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([eventId, userId])
+}
+
+model Ticket {
+  id           String       @id @default(cuid())
+  shortCode    String       @unique // human-readable backup code e.g. BF-7K2M
+  eventId      String
+  event        Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tier         String       @default("NORMAL") // NORMAL | VIP
+  status       String       @default("VALID") // VALID | CHECKED_IN | REVOKED | VOID
+  holderName   String?
+  holderPhone  String?
+  holderEmail  String?
+  checkedInAt  DateTime?
+  checkedInBy  String? // user id
+  createdAt    DateTime     @default(now())
+
+  scans ScanLog[]
+
+  @@index([eventId, status])
+  @@index([eventId, holderName])
+}
+
+model BlacklistEntry {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  reason    String?
+  eventId   String? // null = global
+  createdAt DateTime @default(now())
+
+  @@index([name])
+}
+
+model ScanLog {
+  id        String   @id @default(cuid())
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  result    String // OK | DUPLICATE | REVOKED | BLACKLISTED | INVALID | WRONG_EVENT
+  createdAt DateTime @default(now())
+
+  @@index([ticketId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

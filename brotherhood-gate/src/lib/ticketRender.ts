@@ -342,6 +342,11 @@ export async function renderTicketPng(
   ctx.font = `600 ${fitFont(holder, 48, 18)}px ${SERIF}`;
   ctx.fillText(holder, cx, admitTop + 108);
 
+  // ── prompt notice ────────────────────────────────────────────────────
+  ctx.fillStyle = "#e6c47c";
+  ctx.font = `bold 13px ${DISPLAY}`;
+  drawSpaced(ctx, "PLEASE BE PRESENT 15 MINUTES BEFORE EVENT START TIME", cx, H - 124, 2);
+
   // ── footer ───────────────────────────────────────────────────────────
   ctx.save();
   ctx.strokeStyle = accent;

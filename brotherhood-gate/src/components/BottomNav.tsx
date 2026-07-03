@@ -7,6 +7,7 @@ const items = [
   { href: "/dashboard", label: "Den", icon: "🏴", roles: ["ADMIN", "STAFF"] },
   { href: "/events", label: "Events", icon: "🗺️", roles: ["ADMIN", "STAFF"] },
   { href: "/scan", label: "Scan", icon: "◈", roles: ["ADMIN", "STAFF"], big: true },
+  { href: "/hunt/admin", label: "Hunt", icon: "🧭", roles: ["ADMIN", "STAFF"] },
   { href: "/blacklist", label: "Templars", icon: "☠️", roles: ["ADMIN"] },
   { href: "/staff", label: "Crew", icon: "⚔️", roles: ["ADMIN"] },
 ];

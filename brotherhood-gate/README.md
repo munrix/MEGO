@@ -1,7 +1,23 @@
 # MEGO
 
-QR-based ticket management platform, Assassin's Creed: Black Flag themed.
-Mobile-first, built for admins ("Mentors") and security staff ("Assassins") working the door.
+Two Assassin's Creed: Black Flag themed event tools in one app — pick at `/`:
+
+1. **Ticket Command** — QR ticket management for admins ("Mentors") and security
+   staff ("Assassins") working the door.
+2. **Treasure Hunt** — mall-wide scavenger hunt: open registration, personal
+   randomized routes through 8 QR stations, live winner placement, redemption desk
+   view, and a cinema big-screen display.
+
+## Treasure Hunt quick reference
+
+- Player app: `/hunt` (register, AR-primary RTL + EN toggle) → `/hunt/play`
+- Station QR target: `/s/<slug>?t=<token>` — print posters from Hunt admin
+- Staff: `/hunt/admin` (config, stations, clue editing, player search, KEY GIVEN,
+  flags, CSV export) — Mentors see everything, Assassins see redemption tools
+- Big screen: `/hunt/screen` (public, display-only, auto-refresh)
+- Seed stations/config: `npx tsx prisma/seed-hunt.ts`
+- Anti-cheat: HMAC-free but token-gated stations, server timestamps only,
+  auto-flags (<10 min completion, cross-floor scans <45 s), atomic placement.
 
 ## Quick start
 

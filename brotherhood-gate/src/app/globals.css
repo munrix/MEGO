@@ -51,6 +51,24 @@ h1, h2, h3, .display {
   letter-spacing: 0.04em;
 }
 
+/* Arabic typography — Amiri (classical naskh) for text, Aref Ruqaa for headings.
+   Applies wherever content is marked RTL, including Arabic lines inside LTR pages. */
+[dir="rtl"],
+[dir="rtl"] .input,
+[dir="rtl"] textarea {
+  font-family: var(--font-arabic), var(--font-body), serif;
+}
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] .display {
+  font-family: var(--font-arabic-display), var(--font-arabic), serif;
+  letter-spacing: 0;
+}
+[dir="rtl"] .stat-value {
+  letter-spacing: 0;
+}
+
 .panel {
   background: linear-gradient(180deg, #171b21, #12151a);
   border: 1px solid var(--border);

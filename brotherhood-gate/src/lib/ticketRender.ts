@@ -22,7 +22,7 @@ function ensureFonts() {
     ["lora-600.ttf", "Lora"],
     ["lora-500.ttf", "Lora"],
     ["courier-prime-700.ttf", "Courier Prime"],
-    ["noto-naskh-arabic-600.ttf", "Noto Naskh Arabic"],
+    ["amiri-700.ttf", "Amiri"],
   ];
   for (const [file, family] of fonts) {
     const p = path.join(FONTS_DIR, file);
@@ -34,8 +34,8 @@ function ensureFonts() {
   fontsReady = true;
 }
 
-const SERIF = `Lora, "Noto Naskh Arabic"`;
-const DISPLAY = `Cinzel, Lora, "Noto Naskh Arabic"`;
+const SERIF = `Lora, Amiri`;
+const DISPLAY = `Cinzel, Lora, Amiri`;
 const MONO = `"Courier Prime"`;
 
 type TicketData = {

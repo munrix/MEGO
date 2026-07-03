@@ -97,3 +97,65 @@ model AuditLog {
 
   @@index([createdAt])
 }
+
+// ─── Treasure Hunt (Phase 2) ─────────────────────────────────────────────
+
+model HuntStation {
+  id      String  @id @default(cuid())
+  slug    String  @unique
+  nameEn  String
+  nameAr  String
+  floor   String
+  token   String  @unique
+  active  Boolean @default(true)
+  clueEn  String
+  clueAr  String
+  sortKey Int     @default(0)
+
+  scans HuntScan[]
+}
+
+model HuntPlayer {
+  id           String    @id @default(cuid())
+  fullName     String
+  phone        String?
+  sessionToken String    @unique
+  route        String // JSON array of station ids, player's personal order
+  registeredAt DateTime  @default(now())
+  completedAt  DateTime?
+  placement    Int?      @unique
+  flagged      Boolean   @default(false)
+  flagReason   String?
+  keyGivenAt   DateTime?
+  keyGivenBy   String?
+
+  scans HuntScan[]
+
+  @@index([fullName])
+  @@index([completedAt])
+}
+
+model HuntScan {
+  id        String      @id @default(cuid())
+  playerId  String
+  player    HuntPlayer  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  stationId String
+  station   HuntStation @relation(fields: [stationId], references: [id], onDelete: Cascade)
+  scannedAt DateTime    @default(now())
+  userAgent String?
+  ip        String?
+
+  @@unique([playerId, stationId])
+  @@index([scannedAt])
+}
+
+model HuntConfig {
+  id             Int      @id @default(1)
+  registrationAt DateTime
+  opensAt        DateTime
+  closesAt       DateTime
+  maxWinners     Int      @default(15)
+  lenientMode    Boolean  @default(true)
+  requiredCount  Int      @default(8)
+  killSwitch     Boolean  @default(false)
+}

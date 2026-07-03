@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Cinzel, Source_Sans_3 } from "next/font/google";
+import { Cinzel, Source_Sans_3, Amiri, Aref_Ruqaa } from "next/font/google";
 import "./globals.css";
 import { SwRegister } from "@/components/SwRegister";
 
@@ -12,6 +12,18 @@ const cinzel = Cinzel({
 const body = Source_Sans_3({
   variable: "--font-body",
   subsets: ["latin"],
+});
+
+const amiri = Amiri({
+  variable: "--font-arabic",
+  subsets: ["arabic"],
+  weight: ["400", "700"],
+});
+
+const arefRuqaa = Aref_Ruqaa({
+  variable: "--font-arabic-display",
+  subsets: ["arabic"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
@@ -41,7 +53,9 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={`${cinzel.variable} ${body.variable} antialiased`}>
+      <body
+        className={`${cinzel.variable} ${body.variable} ${amiri.variable} ${arefRuqaa.variable} antialiased`}
+      >
         <SwRegister />
         {children}
       </body>

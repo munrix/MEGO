@@ -7,6 +7,7 @@ import {
   revokeTicket,
   restoreTicket,
   assignHolder,
+  deleteTicket,
 } from "@/app/(app)/events/actions";
 
 type Ticket = {
@@ -154,6 +155,17 @@ function MenuButton({
               ↺ Restore
             </button>
           )}
+          <button
+            disabled={pending}
+            onClick={() => {
+              if (window.confirm("Are you sure you want to permanently delete this ticket?")) {
+                start(() => deleteTicket(ticket.id));
+              }
+            }}
+            className="px-3 py-2 text-sm text-left text-bloodbright border-t border-line mt-1 pt-2 hover:bg-panel2 rounded"
+          >
+            🗑 Delete Ticket
+          </button>
         </div>
       )}
     </>

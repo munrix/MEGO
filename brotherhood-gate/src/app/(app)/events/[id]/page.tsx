@@ -5,6 +5,7 @@ import { getSession } from "@/lib/session";
 import { generateTickets, updateEventStatus } from "../actions";
 import { TicketRow } from "@/components/TicketRow";
 import { CsvImport } from "@/components/CsvImport";
+import { DeleteEventButton } from "@/components/DeleteEventButton";
 
 export const dynamic = "force-dynamic";
 
@@ -74,6 +75,7 @@ export default async function EventDetail({
               <button className="btn btn-green text-xs px-3 py-1.5">Reopen</button>
             </form>
           )}
+          {isAdmin && <DeleteEventButton eventId={id} />}
         </div>
       </div>
 

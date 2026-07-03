@@ -191,3 +191,32 @@ export async function undoCheckIn(ticketId: string) {
   );
   revalidatePath(`/events/${ticket.eventId}`);
 }
+
+export async function deleteTicket(ticketId: string) {
+  const user = await requireAdmin();
+  const ticket = await db.ticket.delete({
+    where: { id: ticketId },
+  });
+  await audit(
+    user.id,
+    "TICKET_DELETE",
+    `${ticket.shortCode} (${ticket.holderName ?? "Bearer"})`
+  );
+  revalidatePath(`/events/${ticket.eventId}`);
+}
+
+export async function deleteEvent(eventId: string) {
+  const user = await requireAdmin();
+  // Clear eventId from blacklist entries referencing this event
+  await db.blacklistEntry.updateMany({
+    where: { eventId },
+    data: { eventId: null },
+  });
+  const event = await db.event.delete({
+    where: { id: eventId },
+  });
+  await audit(user.id, "EVENT_DELETE", `${event.name} (${event.id})`);
+  revalidatePath("/dashboard");
+  revalidatePath("/events");
+  redirect("/dashboard");
+}

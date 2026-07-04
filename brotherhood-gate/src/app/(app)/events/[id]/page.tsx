@@ -14,10 +14,10 @@ export default async function EventDetail({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ q?: string; filter?: string }>;
+  searchParams: Promise<{ q?: string; filter?: string; sort?: string }>;
 }) {
   const { id } = await params;
-  const { q = "", filter = "all" } = await searchParams;
+  const { q = "", filter = "all", sort = "default" } = await searchParams;
   const user = (await getSession())!;
   const isAdmin = user.role === "ADMIN";
 
@@ -34,12 +34,57 @@ export default async function EventDetail({
   if (filter === "vip") where.tier = "VIP";
   if (filter === "revoked") where.status = { in: ["REVOKED", "VOID"] };
 
-  const [tickets, total, checkedIn, vipIn, vipTotal, staff] = await Promise.all([
-    db.ticket.findMany({
+  let orderBy: any[] = [{ status: "asc" }, { createdAt: "desc" }];
+  if (sort === "alpha") {
+    orderBy = [{ holderName: "asc" }, { createdAt: "desc" }];
+  } else if (sort === "added-desc") {
+    orderBy = [{ createdAt: "desc" }];
+  } else if (sort === "added-asc") {
+    orderBy = [{ createdAt: "asc" }];
+  }
+
+  let tickets: any[] = [];
+
+  if (filter === "duplicates") {
+    const allTickets = await db.ticket.findMany({
+      where: { eventId: id },
+      orderBy,
+    });
+
+    const phoneCounts = new Map<string, number>();
+    const nameCounts = new Map<string, number>();
+
+    for (const t of allTickets) {
+      if (t.holderPhone) {
+        const p = t.holderPhone.trim();
+        phoneCounts.set(p, (phoneCounts.get(p) || 0) + 1);
+      }
+      if (t.holderName) {
+        const n = t.holderName.trim().toLowerCase();
+        nameCounts.set(n, (nameCounts.get(n) || 0) + 1);
+      }
+    }
+
+    tickets = allTickets.filter((t) => {
+      if (q) {
+        const qUpper = q.toUpperCase();
+        const matchesName = t.holderName?.toLowerCase().includes(q.toLowerCase());
+        const matchesCode = t.shortCode.toUpperCase().includes(qUpper);
+        if (!matchesName && !matchesCode) return false;
+      }
+      const hasDupPhone = t.holderPhone && (phoneCounts.get(t.holderPhone.trim()) || 0) > 1;
+      const hasDupName = t.holderName && (nameCounts.get(t.holderName.trim().toLowerCase()) || 0) > 1;
+      return hasDupPhone || hasDupName;
+    });
+  } else {
+    tickets = await db.ticket.findMany({
       where,
-      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+      orderBy,
       take: 300,
-    }),
+    });
+  }
+
+  const [total, checkedIn, vipIn, vipTotal, staff] = await Promise.all([
     db.ticket.count({ where: { eventId: id } }),
     db.ticket.count({ where: { eventId: id, status: "CHECKED_IN" } }),
     db.ticket.count({ where: { eventId: id, tier: "VIP", status: "CHECKED_IN" } }),
@@ -162,22 +207,43 @@ export default async function EventDetail({
           />
           <button className="btn btn-outline shrink-0">Search</button>
         </form>
-        <div className="flex gap-1.5 flex-wrap text-sm">
-          {[
-            ["all", "All"],
-            ["out", "Not arrived"],
-            ["in", "Inside"],
-            ["vip", "VIP"],
-            ["revoked", "Revoked"],
-          ].map(([key, label]) => (
-            <Link
-              key={key}
-              href={`/events/${id}?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}`}
-              className={`badge ${filter === key ? "badge-vip" : "badge-muted"}`}
-            >
-              {label}
-            </Link>
-          ))}
+        <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
+          <div className="flex gap-1.5 flex-wrap">
+            {[
+              ["all", "All"],
+              ["out", "Not arrived"],
+              ["in", "Inside"],
+              ["vip", "VIP"],
+              ["revoked", "Revoked"],
+              ["duplicates", "Duplicates ⚠️"],
+            ].map(([key, label]) => (
+              <Link
+                key={key}
+                href={`/events/${id}?filter=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}${sort !== "default" ? `&sort=${sort}` : ""}`}
+                className={`badge ${filter === key ? "badge-vip" : "badge-muted"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-muted text-xs">Sort:</span>
+            {[
+              ["default", "Default"],
+              ["alpha", "A-Z"],
+              ["added-desc", "Newest"],
+              ["added-asc", "Oldest"],
+            ].map(([key, label]) => (
+              <Link
+                key={key}
+                href={`/events/${id}?sort=${key}${q ? `&q=${encodeURIComponent(q)}` : ""}${filter !== "all" ? `&filter=${filter}` : ""}`}
+                className={`badge ${sort === key ? "badge-vip" : "badge-muted"}`}
+              >
+                {label}
+              </Link>
+            ))}
+          </div>
         </div>
         <div className="panel divide-y divide-line">
           {tickets.length === 0 && (

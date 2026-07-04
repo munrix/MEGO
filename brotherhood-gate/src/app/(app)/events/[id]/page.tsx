@@ -76,6 +76,20 @@ export default async function EventDetail({
       const hasDupName = t.holderName && (nameCounts.get(t.holderName.trim().toLowerCase()) || 0) > 1;
       return hasDupPhone || hasDupName;
     });
+
+    tickets.sort((a, b) => {
+      const aPhone = a.holderPhone?.trim() || "";
+      const aName = a.holderName?.trim().toLowerCase() || "";
+      const isDupAPhone = aPhone && (phoneCounts.get(aPhone) || 0) > 1;
+      const aKey = isDupAPhone ? `phone:${aPhone}` : `name:${aName}`;
+
+      const bPhone = b.holderPhone?.trim() || "";
+      const bName = b.holderName?.trim().toLowerCase() || "";
+      const isDupBPhone = bPhone && (phoneCounts.get(bPhone) || 0) > 1;
+      const bKey = isDupBPhone ? `phone:${bPhone}` : `name:${bName}`;
+
+      return aKey.localeCompare(bKey);
+    });
   } else {
     tickets = await db.ticket.findMany({
       where,

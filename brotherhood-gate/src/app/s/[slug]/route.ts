@@ -8,7 +8,8 @@ export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const { slug } = await params;
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.toLowerCase();
   const token = req.nextUrl.searchParams.get("t") ?? "";
   const playerId = await getHuntPlayerId();
 

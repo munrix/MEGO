@@ -54,9 +54,6 @@ export async function POST(req: NextRequest) {
   if (!existingPlayer && phone) {
     existingPlayer = await db.huntPlayer.findFirst({ where: { phone } });
   }
-  if (!existingPlayer && ip !== "unknown") {
-    existingPlayer = await db.huntPlayer.findFirst({ where: { ip, userAgent } });
-  }
 
   if (existingPlayer) {
     await createHuntSession(existingPlayer.id);
@@ -68,7 +65,7 @@ export async function POST(req: NextRequest) {
     if (jarPending) {
       const [slug, token] = jarPending.split("|");
       if (slug && token) {
-        const outcome = await processScan(existingPlayer.id, slug, token, {
+        const outcome = await processScan(existingPlayer.id, slug.toLowerCase(), token, {
           userAgent,
           ip,
         });
@@ -94,7 +91,7 @@ export async function POST(req: NextRequest) {
   let firstStationSlug = "havana";
   if (jarPending) {
     const [slug] = jarPending.split("|");
-    if (slug) firstStationSlug = slug;
+    if (slug) firstStationSlug = slug.toLowerCase();
   }
 
   const stations = await db.huntStation.findMany({ where: { active: true } });
@@ -134,7 +131,7 @@ export async function POST(req: NextRequest) {
   if (jarPending) {
     const [slug, token] = jarPending.split("|");
     if (slug && token) {
-      const outcome = await processScan(player.id, slug, token, {
+      const outcome = await processScan(player.id, slug.toLowerCase(), token, {
         userAgent,
         ip,
       });

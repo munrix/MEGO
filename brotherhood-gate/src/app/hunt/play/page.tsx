@@ -16,7 +16,14 @@ type State = {
   required: number;
   foundCount?: number;
   medallions?: Array<{ slug: string; nameEn: string; nameAr: string; lit: boolean }>;
-  clue?: { en: string; ar: string; hintFloor: string | null; hintReady: boolean } | null;
+  clue?: {
+    en: string;
+    ar: string;
+    nameEn: string;
+    nameAr: string;
+    hintFloor: string | null;
+    hintReady: boolean;
+  } | null;
   completed?: { at: string; placement: number; isWinner: boolean; minutes: number } | null;
   leaderboard?: Array<{ name: string; placement: number }>;
   opensAt: string;
@@ -34,7 +41,6 @@ type Celebration = {
 export default function HuntPlay() {
   const [lang, setLang] = useLang();
   const [state, setState] = useState<State | null>(null);
-  const [showHint, setShowHint] = useState(false);
   const [celebrate, setCelebrate] = useState<Celebration | null>(null);
   const router = useRouter();
 
@@ -158,7 +164,15 @@ export default function HuntPlay() {
             {state.phase === "open" && <HuntScanner lang={lang} />}
             {state.clue && (
               <div className="panel p-6 flex flex-col gap-4">
-                <span className="text-muted text-xs uppercase tracking-widest">
+                <div>
+                  <span className="text-muted text-xs uppercase tracking-widest">
+                    {lang === "ar" ? "تبحث عن" : "You're looking for"}
+                  </span>
+                  <p className="text-2xl font-bold text-[#ff8c33] mt-1">
+                    🎯 {lang === "ar" ? state.clue.nameAr : state.clue.nameEn}
+                  </p>
+                </div>
+                <span className="text-muted text-xs uppercase tracking-widest border-t border-line pt-3">
                   {t.yourClue[lang]}
                 </span>
                 <p className="text-xl leading-relaxed whitespace-pre-line display text-ink">
@@ -170,25 +184,6 @@ export default function HuntPlay() {
                 >
                   {lang === "ar" ? state.clue.en : state.clue.ar}
                 </p>
-                <div>
-                  {state.clue.hintReady ? (
-                    showHint ? (
-                      <span className="badge badge-vip text-sm">
-                        📍 {t.hintFloor[lang]}{" "}
-                        {state.clue.hintFloor}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => setShowHint(true)}
-                        className="btn btn-outline text-sm"
-                      >
-                        💡 {t.hint[lang]}
-                      </button>
-                    )
-                  ) : (
-                    <span className="text-muted text-xs">{t.hintLocked[lang]}</span>
-                  )}
-                </div>
               </div>
             )}
           </>

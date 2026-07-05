@@ -23,7 +23,7 @@ export async function updateHuntConfig(formData: FormData) {
       registrationAt: parse("registrationAt"),
       opensAt: parse("opensAt"),
       closesAt: parse("closesAt"),
-      maxWinners: Math.max(1, parseInt(String(formData.get("maxWinners") || "15"), 10) || 15),
+      maxWinners: Math.max(1, parseInt(String(formData.get("maxWinners") || "8"), 10) || 8),
       requiredCount: Math.min(8, Math.max(1, parseInt(String(formData.get("requiredCount") || "8"), 10) || 8)),
       lenientMode: formData.get("lenientMode") === "on",
       killSwitch: formData.get("killSwitch") === "on",

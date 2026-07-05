@@ -46,13 +46,13 @@ async function main() {
   // Event: July 8 2026, Baghdad (UTC+3) — reg 19:25, scans 19:30–20:00
   await prisma.huntConfig.upsert({
     where: { id: 1 },
-    update: { lenientMode: false },
+    update: { lenientMode: false, maxWinners: 8 },
     create: {
       id: 1,
       registrationAt: new Date("2026-07-08T16:25:00Z"),
       opensAt: new Date("2026-07-08T16:30:00Z"),
       closesAt: new Date("2026-07-08T17:00:00Z"),
-      maxWinners: 15,
+      maxWinners: 8,
       lenientMode: false,
       requiredCount: 8,
       killSwitch: false,

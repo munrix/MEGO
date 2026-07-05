@@ -19,11 +19,18 @@ export async function GET(
   const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? "localhost:3000";
   const scanUrl = `${proto}://${host}/s/${station.slug}?t=${station.token}`;
 
-  const png = await renderStationPoster(station, scanUrl);
+  // optional custom size — blank/invalid falls back to the A4 default
+  const wRaw = parseInt(req.nextUrl.searchParams.get("w") ?? "", 10);
+  const hRaw = parseInt(req.nextUrl.searchParams.get("h") ?? "", 10);
+  const width = Number.isFinite(wRaw) && wRaw > 0 ? wRaw : undefined;
+  const height = Number.isFinite(hRaw) && hRaw > 0 ? hRaw : undefined;
+
+  const png = await renderStationPoster(station, scanUrl, { width, height });
+  const sizeTag = width ? `-${width}x${height ?? Math.round(width * (1754 / 1240))}` : "";
   return new NextResponse(new Uint8Array(png), {
     headers: {
       "Content-Type": "image/png",
-      "Content-Disposition": `attachment; filename="hunt-poster-${station.slug}.png"`,
+      "Content-Disposition": `attachment; filename="hunt-poster-${station.slug}${sizeTag}.png"`,
       "Cache-Control": "no-store",
     },
   });

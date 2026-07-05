@@ -206,6 +206,10 @@ export default async function HuntAdmin({
             📍 Stations ({stations.filter((s) => s.active).length}/{stations.length} active)
           </summary>
           <div className="p-4 pt-0 flex flex-col divide-y divide-line">
+            <p className="text-muted text-xs py-2">
+              Poster size (px): set a width, and optionally a height. Leave height
+              blank for the default A4 print ratio.
+            </p>
             {stations.map((s) => (
               <div key={s.id} className="py-3 flex flex-col gap-2">
                 <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -218,10 +222,37 @@ export default async function HuntAdmin({
                       /s/{s.slug}?t={s.token} · {s._count.scans} scans
                     </p>
                   </div>
-                  <div className="flex gap-1.5">
-                    <a href={`/api/hunt/admin/poster/${s.id}`} className="btn btn-outline text-xs px-2.5 py-1.5">
-                      ⬇ Poster
-                    </a>
+                  <div className="flex gap-1.5 items-center">
+                    <form
+                      action={`/api/hunt/admin/poster/${s.id}`}
+                      method="GET"
+                      className="flex items-center gap-1"
+                    >
+                      <input
+                        name="w"
+                        type="number"
+                        min={300}
+                        max={8000}
+                        defaultValue={1240}
+                        title="Width in pixels"
+                        aria-label="Poster width in pixels"
+                        className="input w-16 py-1 text-xs text-center"
+                      />
+                      <span className="text-muted text-xs">×</span>
+                      <input
+                        name="h"
+                        type="number"
+                        min={300}
+                        max={12000}
+                        placeholder="auto"
+                        title="Height in pixels (blank = A4 ratio)"
+                        aria-label="Poster height in pixels"
+                        className="input w-16 py-1 text-xs text-center"
+                      />
+                      <button className="btn btn-outline text-xs px-2.5 py-1.5">
+                        ⬇ Poster
+                      </button>
+                    </form>
                     <form action={regenStationToken.bind(null, s.id)}>
                       <button className="btn btn-outline text-xs px-2.5 py-1.5">↻ New token</button>
                     </form>

@@ -51,18 +51,19 @@ h1, h2, h3, .display {
   letter-spacing: 0.04em;
 }
 
-/* Arabic typography — Amiri (classical naskh) for text, Aref Ruqaa for headings.
+/* Arabic typography — plain system sans (Arial/Tahoma/Segoe UI all ship clean
+   Arabic glyphs) for maximum legibility, headings included.
    Applies wherever content is marked RTL, including Arabic lines inside LTR pages. */
 [dir="rtl"],
 [dir="rtl"] .input,
 [dir="rtl"] textarea {
-  font-family: var(--font-arabic), var(--font-body), serif;
+  font-family: Arial, Tahoma, "Segoe UI", system-ui, sans-serif;
 }
 [dir="rtl"] h1,
 [dir="rtl"] h2,
 [dir="rtl"] h3,
 [dir="rtl"] .display {
-  font-family: var(--font-arabic-display), var(--font-arabic), serif;
+  font-family: Arial, Tahoma, "Segoe UI", system-ui, sans-serif;
   letter-spacing: 0;
 }
 [dir="rtl"] .stat-value {

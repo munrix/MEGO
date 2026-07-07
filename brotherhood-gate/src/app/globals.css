@@ -70,6 +70,38 @@ h1, h2, h3, .display {
   letter-spacing: 0;
 }
 
+/* Hunt scanner reticle: idles as a centered frame, then snaps onto the
+   detected QR code. The huge box-shadow dims everything outside the frame. */
+.hunt-reticle {
+  position: absolute;
+  border: 3px solid rgba(230, 196, 124, 0.9);
+  border-radius: 1rem;
+  pointer-events: none;
+  transition: all 0.18s ease-out;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.25);
+}
+.hunt-reticle[data-state="seek"] {
+  animation: reticle-pulse 1.8s ease-in-out infinite;
+}
+.hunt-reticle[data-state="locked"] {
+  border-color: #4ade80;
+  box-shadow:
+    0 0 0 9999px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(74, 222, 128, 0.6);
+}
+.hunt-reticle[data-state="bad"] {
+  border-color: #f87171;
+}
+@keyframes reticle-pulse {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
 .panel {
   background: linear-gradient(180deg, #171b21, #12151a);
   border: 1px solid var(--border);

@@ -129,13 +129,13 @@ export async function renderStationPoster(
   // brand logo (aspect-fit into a top band), then crest + heading.
   // With the logo present the crest shrinks and moves down to make room.
   if (logo) {
-    const fit = Math.min((W * 0.32) / logo.width, (H * 0.042) / logo.height);
+    const fit = Math.min((W * 0.3) / logo.width, (H * 0.058) / logo.height);
     const logoW = logo.width * fit;
     const logoH = logo.height * fit;
-    ctx.drawImage(logo, cx - logoW / 2, H * 0.027, logoW, logoH);
+    ctx.drawImage(logo, cx - logoW / 2, H * 0.024, logoW, logoH);
   }
-  const crestSize = Math.round(Math.min(W, H) * (logo ? 0.08 : 0.1));
-  ctx.drawImage(crest, cx - crestSize / 2, H * (logo ? 0.078 : 0.045), crestSize, crestSize);
+  const crestSize = Math.round(Math.min(W, H) * (logo ? 0.072 : 0.1));
+  ctx.drawImage(crest, cx - crestSize / 2, H * (logo ? 0.088 : 0.045), crestSize, crestSize);
 
   ctx.fillStyle = gold;
   const titleSize = fitFont(ctx, "TREASURE HUNT", (s) => `bold ${s}px Cinzel`, 56 * k, maxTextW);

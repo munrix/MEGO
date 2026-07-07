@@ -82,9 +82,14 @@ export async function renderStationPoster(
   const qrCenterY = H * 0.6;
 
   const themeDir = path.join(process.cwd(), "public/theme");
-  const [bg, crest, qrImg] = await Promise.all([
+  // optional brand logo shown at the very top of the poster; skipped if absent
+  const logoPath = path.join(themeDir, "hunt-logo.png");
+  const [bg, crest, logo, qrImg] = await Promise.all([
     fs.promises.readFile(path.join(themeDir, "ticket-bg-vip.jpg")).then(loadImage),
     fs.promises.readFile(path.join(themeDir, "crest-white.png")).then(loadImage),
+    fs.existsSync(logoPath)
+      ? fs.promises.readFile(logoPath).then(loadImage)
+      : Promise.resolve(null),
     QRCode.toBuffer(scanUrl, {
       width: clamp(qrPx, 200, 3000),
       margin: 2,
@@ -121,9 +126,16 @@ export async function renderStationPoster(
 
   const maxTextW = W * 0.86;
 
-  // crest + heading
-  const crestSize = Math.round(Math.min(W, H) * 0.1);
-  ctx.drawImage(crest, cx - crestSize / 2, H * 0.045, crestSize, crestSize);
+  // brand logo (aspect-fit into a top band), then crest + heading.
+  // With the logo present the crest shrinks and moves down to make room.
+  if (logo) {
+    const fit = Math.min((W * 0.32) / logo.width, (H * 0.042) / logo.height);
+    const logoW = logo.width * fit;
+    const logoH = logo.height * fit;
+    ctx.drawImage(logo, cx - logoW / 2, H * 0.027, logoW, logoH);
+  }
+  const crestSize = Math.round(Math.min(W, H) * (logo ? 0.08 : 0.1));
+  ctx.drawImage(crest, cx - crestSize / 2, H * (logo ? 0.078 : 0.045), crestSize, crestSize);
 
   ctx.fillStyle = gold;
   const titleSize = fitFont(ctx, "TREASURE HUNT", (s) => `bold ${s}px Cinzel`, 56 * k, maxTextW);

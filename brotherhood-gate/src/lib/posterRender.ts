@@ -77,9 +77,9 @@ export async function renderStationPoster(
   const parchment = "#f3ead6";
 
   // QR plate sized to the canvas; QR generated at its exact draw size for crispness
-  const plate = Math.round(Math.min(W * 0.66, H * 0.46));
+  const plate = Math.round(Math.min(W * 0.74, H * 0.54));
   const qrPx = Math.round(plate * 0.88);
-  const qrCenterY = H * 0.6;
+  const qrCenterY = H * 0.55;
 
   const themeDir = path.join(process.cwd(), "public/theme");
   // optional brand logo shown at the very top of the poster; skipped if absent
@@ -152,27 +152,8 @@ export async function renderStationPoster(
   ctx.font = `700 ${46 * k}px "Aref Ruqaa", Amiri, Lora`;
   ctx.fillText("كنز الأخوية", cx, H * 0.205);
 
-  // station name (fit long names to width)
-  ctx.fillStyle = parchment;
-  const enSize = fitFont(
-    ctx,
-    station.nameEn.toUpperCase(),
-    (s) => `bold ${s}px Cinzel`,
-    110 * k,
-    maxTextW
-  );
-  ctx.font = `bold ${enSize}px Cinzel`;
-  ctx.fillText(station.nameEn.toUpperCase(), cx, H * 0.3);
-
-  const arSize = fitFont(
-    ctx,
-    station.nameAr,
-    (s) => `700 ${s}px "Aref Ruqaa", Amiri, Lora`,
-    68 * k,
-    maxTextW
-  );
-  ctx.font = `700 ${arSize}px "Aref Ruqaa", Amiri, Lora`;
-  ctx.fillText(station.nameAr, cx, H * 0.355);
+  // no station name on the poster — players shouldn't know which
+  // station they found until they scan it
 
   // QR plate
   const plateTop = Math.round(qrCenterY - plate / 2);
